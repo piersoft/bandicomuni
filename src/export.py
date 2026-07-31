@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from core import connect
+from registry import SOLO_ARCHIVIO
 
 DOCS = Path(__file__).resolve().parent.parent / "docs" / "data"
 SOGLIA_RILEVANZA = 2.0
@@ -20,6 +21,11 @@ SOGLIA_RILEVANZA = 2.0
 # il DB viaggia in cache fra le esecuzioni e conserva i record delle fonti
 # disattivate, che altrimenti tornerebbero a comparire nell'export.
 PERIMETRO = "(livello IN ('UE','nazionale') OR regione = 'Puglia')"
+
+
+# Le fonti di solo archivio non entrano nel perimetro utile ma restano consultabili.
+_ESCLUSI = ",".join(f"'{f}'" for f in sorted(SOLO_ARCHIVIO)) or "''"
+UTILE = f"{PERIMETRO} AND fonte_id NOT IN ({_ESCLUSI})"
 STATI_ATTIVI = ("aperto", "in scadenza", "programmato")
 
 CAMPI = ("uid", "titolo", "url", "fonte_nome", "livello", "regione", "ente",
@@ -44,12 +50,12 @@ def esporta(soglia: float = SOGLIA_RILEVANZA) -> dict:
     ph = ",".join("?" * len(STATI_ATTIVI))
 
     utili = [_riga(r) for r in con.execute(
-        f"SELECT * FROM bandi WHERE {PERIMETRO} AND stato IN ({ph}) AND score_comuni >= ? AND score_bando >= 0 "
+        f"SELECT * FROM bandi WHERE {UTILE} AND stato IN ({ph}) AND score_comuni >= ? AND score_bando >= 0 "
         f"ORDER BY (data_scadenza IS NULL), data_scadenza, score_comuni DESC",
         (*STATI_ATTIVI, soglia))]
 
     archivio = [_riga(r) for r in con.execute(
-        f"SELECT * FROM bandi WHERE {PERIMETRO} AND NOT (stato IN ({ph}) AND score_comuni >= ? AND score_bando >= 0) "
+        f"SELECT * FROM bandi WHERE {PERIMETRO} AND NOT (fonte_id NOT IN ({_ESCLUSI}) AND stato IN ({ph}) AND score_comuni >= ? AND score_bando >= 0) "
         f"ORDER BY (data_scadenza IS NULL), data_scadenza DESC LIMIT 5000",
         (*STATI_ATTIVI, soglia))]
 

@@ -25,7 +25,7 @@ FONTI = [
                "documenti-di-attuazione-dei-finanziamenti-avvisi-e-bandi/"],
         sel_item=".card", sel_titolo="h2 a, h3 a")),
     (HtmlConnettore, dict(
-        id="dait", nome="Min. Interno - DAIT Finanza locale", livello="nazionale",
+        id="dait", solo_archivio=True, nome="Min. Interno - DAIT Finanza locale", livello="nazionale",
         ente="Ministero dell'Interno - DAIT",
         lista=[f"https://dait.interno.gov.it/finanza-locale/notizie?page={p}" for p in range(0, 3)],
         sel_item=".views-row", sel_titolo="h2 a",
@@ -66,6 +66,10 @@ FONTI = [
         id="fvg-news", attiva=False, nome="Regione Friuli-Venezia Giulia", livello="regionale", regione="Friuli-VG",
         feed="http://www.regione.fvg.it/rafvg/cms/RAFVG/rss/notizie-in-evidenza")),
 ]
+
+# Fonti che alimentano l'archivio ma non il perimetro utile: pubblicano notizie
+# su decreti gia' adottati, non avvisi con una finestra di candidatura aperta.
+SOLO_ARCHIVIO = {cfg.get("id") or cls.id for cls, cfg in FONTI if cfg.get("solo_archivio")}
 
 CKAN_DA_ESPLORARE = [
     ("dati.gov.it", "https://www.dati.gov.it/opendata"),
