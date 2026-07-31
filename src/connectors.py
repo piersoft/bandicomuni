@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import re
+from datetime import date, timedelta
 from datetime import date
 
 import feedparser
@@ -415,12 +416,16 @@ class GazzettaConnettore(Connettore):
         r"riconoscimento della personalit|cambiamento di denominazione|"
         r"variazione del|liquidazione coatta|regolamento recante", re.I)
     ELENCO = f"{BASE}/30giorni/serie_generale"
+    ARCHIVIO = f"{BASE}/ricercaArchivioCompleto/serie_generale/{{anno}}?anno={{anno}}"
     ENTE = "Gazzetta Ufficiale della Repubblica Italiana"
 
     def _numeri(self) -> list[tuple[str, str]]:
         from selectolax.parser import HTMLParser
 
-        r = self.http.get(self.ELENCO)
+        # Di norma gli ultimi 30 giorni. Con anno=YYYY si legge l'archivio
+        # annuale completo (175 numeri per il 2026), per recuperare il pregresso.
+        anno = self.cfg.get("anno")
+        r = self.http.get(self.ARCHIVIO.format(anno=anno) if anno else self.ELENCO)
         r.raise_for_status()
         visti, out = set(), []
         for a in HTMLParser(r.text).css("a"):
@@ -469,4 +474,13 @@ class GazzettaConnettore(Connettore):
                     data_pubblicazione=parse_data(data),
                     raw={"numero_gazzetta": num, "atto": intestazione[:200]},
                 ))
+
+        # Il sommario non riporta i termini e il testo integrale e' solo in PDF:
+        # per gli atti della GU la scadenza resta ignota. Un decreto pubblicato
+        # da oltre tre mesi con termine sconosciuto e' quasi certamente scaduto:
+        # resta consultabile in archivio ma non viene proposto come aperto.
+        limite = (date.today() - timedelta(days=self.cfg.get("giorni_validita", 90))).isoformat()
+        for b in out:
+            if not b.data_scadenza and (b.data_pubblicazione or "") < limite:
+                b.score_bando = round(b.score_bando - 5.0, 2)
         return out
