@@ -18,7 +18,7 @@ Nessun server, nessun database di runtime, nessun costo di esercizio.
 
 ## Perimetro
 
-Il progetto copre **fonti europee, nazionali e della sola Regione Puglia**. I connettori delle
+Il progetto copre **fonti europee, nazionali e delle Regioni Puglia e Lombardia**. I connettori delle
 altre regioni restano nel codice con `attiva=False`: riattivarli significa togliere un flag in
 `src/registry.py`, non riscrivere nulla.
 

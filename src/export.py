@@ -20,7 +20,9 @@ SOGLIA_RILEVANZA = 2.0
 # Perimetro del progetto. Applicato qui e non con una cancellazione una tantum:
 # il DB viaggia in cache fra le esecuzioni e conserva i record delle fonti
 # disattivate, che altrimenti tornerebbero a comparire nell'export.
-PERIMETRO = "(livello IN ('UE','nazionale') OR regione = 'Puglia')"
+REGIONI = ("Puglia", "Lombardia")
+_REG_SQL = ",".join(f"'{x}'" for x in REGIONI)
+PERIMETRO = f"(livello IN ('UE','nazionale') OR regione IN ({_REG_SQL}))"
 
 
 # Le fonti di solo archivio non entrano nel perimetro utile ma restano consultabili.

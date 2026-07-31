@@ -12,7 +12,7 @@ from core import Http, connect, log_ingest, salva
 
 warnings.filterwarnings("ignore")
 
-# Perimetro del progetto: bandi nazionali, europei e della sola Regione Puglia.
+# Perimetro del progetto: bandi nazionali, europei e delle Regioni Puglia e Lombardia.
 # Le fonti delle altre regioni restano configurate ma disattivate (attiva=False):
 # riattivarle e' questione di togliere il flag, non di riscrivere il connettore.
 FONTI = [
@@ -37,12 +37,13 @@ FONTI = [
         id="rer-bandi", attiva=False, nome="Regione Emilia-Romagna", livello="regionale", regione="Emilia-Romagna",
         base="https://www.regione.emilia-romagna.it/leggi-atti-bandi/bandi-finanziamenti-contributi", bando_certo=True, scadenza_esposta=True)),
     (SocrataConnettore, dict(
-        id="lom-bandi", attiva=False, nome="Regione Lombardia - Bandi Online", livello="regionale", regione="Lombardia",
+        id="lom-bandi", nome="Regione Lombardia - Bandi Online", livello="regionale", regione="Lombardia",
         dominio="https://www.dati.lombardia.it", dataset="bukx-h2uy",
         url_tpl="https://www.bandi.regione.lombardia.it/servizi/servizio/agevolazioni/{codice}",
         map=dict(titolo="titolo_bando", codice="codice_bando", ente="ente",
                  direzione="direzione_generale", apertura="apertura_adesione",
-                 scadenza="chiusura_adesione", tema="tipo_strumento", ordine="codice_bando"), bando_certo=True, scadenza_esposta=True)),
+                 scadenza="chiusura_adesione", tema="tipo_strumento", ordine="codice_bando"), bando_certo=True, scadenza_esposta=True,
+                 richiede_finestra=True)),
     (SediaConnettore, dict(bando_certo=True, scadenza_esposta=True)),
     (PugliaConnettore, dict(bando_certo=True, scadenza_esposta=True)),
     (PaDigitaleConnettore, dict(bando_certo=True, scadenza_esposta=True)),

@@ -127,6 +127,16 @@ class SocrataConnettore(Connettore):
             offset += limit
             if len(righe) < limit or offset > 20000:
                 break
+
+        # Alcune anagrafiche regionali elencano anche finanziamenti a regia
+        # (interventi diretti su un singolo ente, ordinanze, ribassi d'asta):
+        # hanno tipo_strumento "Bando" ma nessuna finestra di adesione, perche'
+        # una candidatura non esiste. Restano in archivio, non fra i bandi aperti.
+        if self.cfg.get("richiede_finestra"):
+            for b in out:
+                if not b.data_scadenza:
+                    b.score_bando = round(b.score_bando - 5.0, 2)
+                    b.scadenza_stato = "ignota"
         return out
 
 
