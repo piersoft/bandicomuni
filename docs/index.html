@@ -1,11 +1,418 @@
 <!doctype html>
-<html lang="it"><head><meta charset="utf-8">
+<html lang="it">
+<head>
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>BandiPA</title></head>
-<body style="font-family:system-ui;max-width:40rem;margin:4rem auto;padding:0 1rem">
-<h1>BandiPA</h1>
-<p>Segnaposto: il portale con filtri e ricerca non e' ancora stato realizzato.</p>
-<p>I dati sono gia' pubblicati e interrogabili:
-<a href="data/bandi.json">bandi.json</a> &middot;
-<a href="data/meta.json">meta.json</a></p>
-</body></html>
+<title>BandiPA — bandi aperti per i Comuni italiani</title>
+<meta name="description" content="Bandi e avvisi pubblici a cui i Comuni italiani possono candidarsi. Fonti istituzionali UE, nazionali e regionali, aggiornate ogni notte.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --carta:#E7ECEE; --foglio:#FFFFFF; --bordo:#CBD6DA;
+  --inchiostro:#132A33; --tenue:#5A7079; --sigillo:#0B5D5D;
+  --urgente:#96262B; --medio:#A8620A; --lontano:#0B5D5D; --ignoto:#93A5AC;
+  --sans:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+  --sp:clamp(1rem,2.5vw,1.75rem);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--carta);color:var(--inchiostro);font-family:var(--sans);
+  font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:var(--sigillo)}
+:focus-visible{outline:2.5px solid var(--sigillo);outline-offset:2px;border-radius:2px}
+
+.testata{border-bottom:1px solid var(--bordo);background:var(--foglio)}
+.testata-in{max-width:1240px;margin:0 auto;padding:1.1rem var(--sp) .9rem;
+  display:flex;flex-wrap:wrap;gap:1rem;align-items:baseline;justify-content:space-between}
+.marchio{font-size:1.45rem;font-weight:700;letter-spacing:-.03em;margin:0}
+.marchio span{color:var(--sigillo)}
+.sottotitolo{margin:.15rem 0 0;color:var(--tenue);font-size:.85rem;max-width:52ch}
+.stato-dati{font-family:var(--mono);font-size:.72rem;color:var(--tenue);text-align:right;line-height:1.7}
+.stato-dati b{color:var(--inchiostro);font-weight:600}
+
+.impianto{max-width:1240px;margin:0 auto;padding:var(--sp);
+  display:grid;grid-template-columns:250px 1fr;gap:var(--sp);align-items:start}
+@media(max-width:860px){.impianto{grid-template-columns:1fr}}
+
+.filtri{background:var(--foglio);border:1px solid var(--bordo);border-radius:3px;
+  padding:1rem;position:sticky;top:1rem}
+@media(max-width:860px){.filtri{position:static}}
+.filtri h2{font-size:.7rem;text-transform:uppercase;letter-spacing:.11em;
+  color:var(--tenue);margin:0 0 .7rem;font-weight:600}
+.gruppo{margin-bottom:1rem}
+.gruppo>label{display:block;font-size:.74rem;font-weight:600;margin-bottom:.3rem;color:var(--tenue)}
+select,input[type=search],input[type=number]{width:100%;font:inherit;font-size:.85rem;
+  padding:.42rem .5rem;border:1px solid var(--bordo);border-radius:2px;
+  background:var(--foglio);color:var(--inchiostro)}
+.riga-check{display:flex;align-items:flex-start;gap:.45rem;font-size:.82rem;margin-top:.45rem;cursor:pointer}
+.riga-check input{margin:.2rem 0 0;flex-shrink:0;accent-color:var(--sigillo)}
+.bottone{font:inherit;font-size:.8rem;font-weight:600;padding:.45rem .7rem;cursor:pointer;
+  background:var(--foglio);color:var(--inchiostro);border:1px solid var(--bordo);border-radius:2px}
+.bottone:hover{border-color:var(--sigillo);color:var(--sigillo)}
+.bottone-pieno{background:var(--sigillo);color:#fff;border-color:var(--sigillo)}
+.bottone-pieno:hover{background:#094a4a;color:#fff}
+.azioni{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.9rem;
+  padding-top:.9rem;border-top:1px solid var(--bordo)}
+
+.barra{display:flex;flex-wrap:wrap;gap:.8rem;align-items:center;justify-content:space-between;
+  margin-bottom:.8rem}
+.conteggio{font-size:.9rem;margin:0}
+.conteggio b{font-size:1.35rem;font-family:var(--mono);font-weight:600}
+.ordina{display:flex;align-items:center;gap:.4rem;font-size:.8rem;color:var(--tenue)}
+.ordina select{width:auto}
+
+.elenco{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.55rem}
+.scheda{background:var(--foglio);border:1px solid var(--bordo);border-radius:3px;
+  padding:.85rem 1rem .8rem;position:relative;overflow:hidden}
+.scheda::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--ignoto)}
+.scheda[data-urgenza=urgente]::before{background:var(--urgente)}
+.scheda[data-urgenza=medio]::before{background:var(--medio)}
+.scheda[data-urgenza=lontano]::before{background:var(--lontano)}
+.cappello{display:flex;flex-wrap:wrap;gap:.45rem;align-items:center;
+  font-family:var(--mono);font-size:.68rem;color:var(--tenue);margin-bottom:.35rem}
+.pillola{border:1px solid var(--bordo);border-radius:2px;padding:.05rem .35rem;
+  text-transform:uppercase;letter-spacing:.04em}
+.pillola-liv{border-color:var(--sigillo);color:var(--sigillo)}
+.titolo{margin:0 0 .3rem;font-size:1rem;font-weight:600;line-height:1.35;letter-spacing:-.01em}
+.titolo a{color:inherit;text-decoration:none}
+.titolo a:hover{color:var(--sigillo);text-decoration:underline;text-underline-offset:2px}
+.estratto{margin:0;font-size:.84rem;color:var(--tenue);
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.piede{display:flex;flex-wrap:wrap;gap:.5rem 1rem;align-items:center;margin-top:.55rem;
+  font-family:var(--mono);font-size:.72rem}
+.scadenza{font-weight:600}
+.scadenza[data-urgenza=urgente]{color:var(--urgente)}
+.scadenza[data-urgenza=medio]{color:var(--medio)}
+.scadenza[data-urgenza=lontano]{color:var(--lontano)}
+.scadenza[data-urgenza=ignoto]{color:var(--ignoto);font-weight:400}
+
+.completezza{display:flex;gap:2px;margin-left:auto;align-items:center}
+.completezza .tacca{width:13px;height:4px;background:var(--bordo);border-radius:1px}
+.completezza .tacca.piena{background:var(--sigillo)}
+.completezza .etichetta{font-size:.66rem;color:var(--ignoto);margin-right:.35rem}
+
+.vuoto{background:var(--foglio);border:1px dashed var(--bordo);border-radius:3px;
+  padding:2.2rem 1.5rem;text-align:center;color:var(--tenue)}
+.vuoto p{margin:.3rem 0}
+.caricamento{padding:2rem;text-align:center;color:var(--tenue);font-family:var(--mono);font-size:.85rem}
+
+.pieDiPagina{max-width:1240px;margin:0 auto;padding:0 var(--sp) 3rem;
+  color:var(--tenue);font-size:.78rem;line-height:1.65}
+.pieDiPagina h2{font-size:.7rem;text-transform:uppercase;letter-spacing:.11em;margin:1.6rem 0 .4rem}
+.fonti-elenco{display:flex;flex-wrap:wrap;gap:.3rem .5rem;padding:0;margin:0;list-style:none;
+  font-family:var(--mono);font-size:.72rem}
+.fonti-elenco li{border:1px solid var(--bordo);border-radius:2px;padding:.1rem .4rem;background:var(--foglio)}
+.fonti-elenco .ko{border-color:var(--urgente);color:var(--urgente)}
+
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<header class="testata">
+  <div class="testata-in">
+    <div>
+      <h1 class="marchio">Bandi<span>PA</span></h1>
+      <p class="sottotitolo">Bandi e avvisi pubblici a cui i Comuni italiani possono candidarsi. Fonti istituzionali UE, nazionali e regionali, raccolte ogni notte.</p>
+    </div>
+    <div class="stato-dati" id="statoDati">caricamento…</div>
+  </div>
+</header>
+
+<main class="impianto">
+  <form class="filtri" id="filtri" aria-label="Filtri di ricerca">
+    <h2>Filtra</h2>
+
+    <div class="gruppo">
+      <label for="q">Cerca nel testo</label>
+      <input type="search" id="q" placeholder="es. videosorveglianza" autocomplete="off">
+    </div>
+
+    <div class="gruppo">
+      <label for="livello">Livello</label>
+      <select id="livello"><option value="">Tutti</option></select>
+    </div>
+
+    <div class="gruppo">
+      <label for="regione">Regione</label>
+      <select id="regione"><option value="">Tutte</option></select>
+    </div>
+
+    <div class="gruppo">
+      <label for="tema">Tema</label>
+      <select id="tema"><option value="">Tutti</option></select>
+    </div>
+
+    <div class="gruppo">
+      <label for="fonte">Fonte</label>
+      <select id="fonte"><option value="">Tutte</option></select>
+    </div>
+
+    <div class="gruppo">
+      <label for="giorni">Scade entro (giorni)</label>
+      <input type="number" id="giorni" min="1" max="720" placeholder="nessun limite">
+      <label class="riga-check"><input type="checkbox" id="soloScadenza">
+        <span>Solo bandi con scadenza pubblicata</span></label>
+      <label class="riga-check"><input type="checkbox" id="conArchivio">
+        <span>Includi chiusi e archivio</span></label>
+    </div>
+
+    <div class="azioni">
+      <button type="button" class="bottone bottone-pieno" id="scaricaCsv">Scarica CSV</button>
+      <button type="button" class="bottone" id="azzera">Azzera</button>
+    </div>
+  </form>
+
+  <section aria-label="Risultati">
+    <div class="barra">
+      <p class="conteggio" id="conteggio" aria-live="polite"><b>—</b> bandi</p>
+      <div class="ordina">
+        <label for="ordine">Ordina per</label>
+        <select id="ordine">
+          <option value="scadenza">Scadenza più vicina</option>
+          <option value="rilevanza">Pertinenza per i Comuni</option>
+          <option value="titolo">Titolo</option>
+        </select>
+      </div>
+    </div>
+    <div id="zonaRisultati"><p class="caricamento">Caricamento dei bandi…</p></div>
+  </section>
+</main>
+
+<footer class="pieDiPagina">
+  <h2>Fonti interrogate</h2>
+  <ul class="fonti-elenco" id="elencoFonti"></ul>
+  <h2>Come leggere questa pagina</h2>
+  <p>Ogni voce riporta quattro tacche di <strong>completezza</strong>: scadenza, dotazione, destinatari e tema.
+  Le tacche spente segnalano informazioni che la fonte non pubblica in forma strutturata — in quel caso
+  conviene aprire il bando originale. La pertinenza per i Comuni è stimata da un classificatore automatico:
+  è un filtro, non una verifica di ammissibilità. <strong>Prima di candidarti verifica sempre sul sito dell'ente
+  che pubblica il bando.</strong></p>
+  <p>Dati grezzi: <a href="data/bandi.json">bandi.json</a> · <a href="data/meta.json">meta.json</a> ·
+  Codice: <a href="https://github.com/piersoft/bandicomuni">github.com/piersoft/bandicomuni</a></p>
+</footer>
+
+<script>
+const S = { bandi: [], archivio: null, meta: null, ultimoRisultato: [] };
+const $ = s => document.querySelector(s);
+const norm = t => (t||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+const OGGI = new Date(); OGGI.setHours(0,0,0,0);
+
+const giorniA = iso => {
+  if(!iso) return null;
+  const d = new Date(iso+"T00:00:00");
+  return isNaN(d) ? null : Math.round((d-OGGI)/86400000);
+};
+const urgenzaDi = g => g===null ? "ignoto" : g<0 ? "ignoto" : g<=15 ? "urgente" : g<=45 ? "medio" : "lontano";
+
+function etichettaScadenza(b){
+  const g = giorniA(b.data_scadenza);
+  if(g===null) return {testo:"scadenza non pubblicata", urgenza:"ignoto"};
+  if(g<0)  return {testo:"termine superato", urgenza:"ignoto"};
+  if(g===0) return {testo:"scade oggi", urgenza:"urgente"};
+  const data = new Date(b.data_scadenza+"T00:00:00")
+    .toLocaleDateString("it-IT",{day:"2-digit",month:"short",year:"numeric"});
+  return {testo:`${data} · ${g} giorn${g===1?"o":"i"}`, urgenza:urgenzaDi(g)};
+}
+
+const euro = v => v==null ? null :
+  new Intl.NumberFormat("it-IT",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(v);
+
+async function carica(){
+  try{
+    const [b,m] = await Promise.all([
+      fetch("data/bandi.json").then(r=>{if(!r.ok)throw new Error("HTTP "+r.status);return r.json()}),
+      fetch("data/meta.json").then(r=>r.ok?r.json():null)
+    ]);
+    S.bandi = b; S.meta = m;
+    popolaFiltri(); mostraStato(); mostraFonti();
+    leggiUrl(); applica();
+  }catch(e){
+    $("#zonaRisultati").innerHTML =
+      `<div class="vuoto"><p><strong>Non è stato possibile caricare i dati.</strong></p>
+       <p>Il file <code>data/bandi.json</code> non ha risposto (${e.message}).
+       Riprova tra qualche minuto: la pubblicazione avviene ogni notte.</p></div>`;
+    $("#statoDati").textContent = "dati non disponibili";
+  }
+}
+
+async function caricaArchivio(){
+  if(S.archivio) return S.archivio;
+  const r = await fetch("data/archivio.json");
+  S.archivio = r.ok ? await r.json() : [];
+  return S.archivio;
+}
+
+function mostraStato(){
+  if(!S.meta) return;
+  const d = new Date(S.meta.generato);
+  $("#statoDati").innerHTML =
+    `<b>${S.meta.totali.perimetro_utile}</b> bandi aperti per i Comuni<br>` +
+    `aggiornato ${d.toLocaleDateString("it-IT",{day:"2-digit",month:"long"})} ` +
+    `alle ${d.toLocaleTimeString("it-IT",{hour:"2-digit",minute:"2-digit"})}<br>` +
+    `<b>${S.meta.totali.in_database.toLocaleString("it-IT")}</b> record esaminati`;
+}
+
+function mostraFonti(){
+  if(!S.meta) return;
+  const esiti = {};
+  (S.meta.ultimo_ingest||[]).forEach(r=>{ if(!(r.fonte_id in esiti)) esiti[r.fonte_id]=r.esito; });
+  $("#elencoFonti").innerHTML = (S.meta.fonti||[]).map(f=>{
+    const ko = esiti[f.fonte_id]==="errore";
+    return `<li class="${ko?"ko":""}" title="${ko?"ultima raccolta fallita":"ultima raccolta riuscita"}">`+
+           `${f.fonte_nome} · ${f.n_utili}</li>`;
+  }).join("");
+}
+
+function popolaFiltri(){
+  const conta = campo => {
+    const m = new Map();
+    S.bandi.forEach(b=>{ const v=b[campo]; if(v) m.set(v,(m.get(v)||0)+1); });
+    return [...m].sort((a,b)=> b[1]-a[1] || a[0].localeCompare(b[0],"it"));
+  };
+  const opz = (sel, valori) => {
+    const s = $(sel), tieni = s.value;
+    valori.forEach(([v,n])=>{
+      const o = document.createElement("option");
+      o.value = v; o.textContent = `${v} (${n})`; s.appendChild(o);
+    });
+    s.value = tieni;
+  };
+  opz("#livello", conta("livello"));
+  opz("#regione", conta("regione"));
+  opz("#tema", conta("tema"));
+  opz("#fonte", conta("fonte_nome"));
+}
+
+function filtra(dati){
+  const q = norm($("#q").value.trim());
+  const liv = $("#livello").value, reg = $("#regione").value;
+  const tem = $("#tema").value, fon = $("#fonte").value;
+  const gg = parseInt($("#giorni").value,10);
+  const soloScad = $("#soloScadenza").checked;
+
+  return dati.filter(b=>{
+    if(liv && b.livello!==liv) return false;
+    if(reg && b.regione!==reg) return false;
+    if(tem && b.tema!==tem) return false;
+    if(fon && b.fonte_nome!==fon) return false;
+    if(soloScad && !b.data_scadenza) return false;
+    if(!isNaN(gg)){
+      const g = giorniA(b.data_scadenza);
+      if(g===null || g<0 || g>gg) return false;
+    }
+    if(q){
+      const testo = norm(`${b.titolo} ${b.descrizione||""} ${b.ente||""} ${(b.beneficiari||[]).join(" ")}`);
+      if(!q.split(/\s+/).every(p=>testo.includes(p))) return false;
+    }
+    return true;
+  });
+}
+
+function ordina(lista){
+  const modo = $("#ordine").value;
+  const c = [...lista];
+  if(modo==="titolo") return c.sort((a,b)=>a.titolo.localeCompare(b.titolo,"it"));
+  if(modo==="rilevanza") return c.sort((a,b)=>(b.score_comuni||0)-(a.score_comuni||0));
+  return c.sort((a,b)=>{
+    const ga=giorniA(a.data_scadenza), gb=giorniA(b.data_scadenza);
+    if(ga===null && gb===null) return (b.score_comuni||0)-(a.score_comuni||0);
+    if(ga===null) return 1;
+    if(gb===null) return -1;
+    return ga-gb;
+  });
+}
+
+const esc = t => (t??"").toString().replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function scheda(b){
+  const s = etichettaScadenza(b);
+  const tacche = [!!b.data_scadenza, b.dotazione!=null,
+                  (b.beneficiari||[]).length>0, !!b.tema];
+  const piene = tacche.filter(Boolean).length;
+  return `<li class="scheda" data-urgenza="${s.urgenza}">
+    <div class="cappello">
+      <span class="pillola pillola-liv">${esc(b.livello)}</span>
+      ${b.regione?`<span class="pillola">${esc(b.regione)}</span>`:""}
+      ${b.tema?`<span class="pillola">${esc(b.tema)}</span>`:""}
+      <span>${esc(b.fonte_nome)}</span>
+    </div>
+    <h3 class="titolo"><a href="${esc(b.url)}" target="_blank" rel="noopener">${esc(b.titolo)}</a></h3>
+    ${b.descrizione?`<p class="estratto">${esc(b.descrizione)}</p>`:""}
+    <div class="piede">
+      <span class="scadenza" data-urgenza="${s.urgenza}">${s.testo}</span>
+      ${b.dotazione!=null?`<span>${euro(b.dotazione)}</span>`:""}
+      <span class="completezza" title="Completezza della scheda: ${piene} campi su 4 (scadenza, dotazione, destinatari, tema)">
+        <span class="etichetta">scheda ${piene}/4</span>
+        ${tacche.map(t=>`<span class="tacca ${t?"piena":""}"></span>`).join("")}
+      </span>
+    </div>
+  </li>`;
+}
+
+function applica(){
+  const base = ($("#conArchivio").checked && S.archivio) ? S.bandi.concat(S.archivio) : S.bandi;
+  const ris = ordina(filtra(base));
+  S.ultimoRisultato = ris;
+
+  $("#conteggio").innerHTML = `<b>${ris.length}</b> band${ris.length===1?"o":"i"}` +
+    (base.length!==ris.length ? ` <span style="color:var(--tenue)">su ${base.length}</span>` : "");
+
+  $("#zonaRisultati").innerHTML = ris.length
+    ? `<ul class="elenco">${ris.map(scheda).join("")}</ul>`
+    : `<div class="vuoto"><p><strong>Nessun bando corrisponde ai filtri.</strong></p>
+       <p>Prova ad allargare la finestra di scadenza, a togliere la regione
+       o a spuntare «Includi chiusi e archivio».</p></div>`;
+  scriviUrl();
+}
+
+const CAMPI_URL = ["q","livello","regione","tema","fonte","giorni","ordine"];
+function scriviUrl(){
+  const p = new URLSearchParams();
+  CAMPI_URL.forEach(k=>{ const v=$("#"+k).value; if(v) p.set(k,v); });
+  if($("#soloScadenza").checked) p.set("scad","1");
+  if($("#conArchivio").checked) p.set("arch","1");
+  history.replaceState(null,"", p.toString() ? "?"+p : location.pathname);
+}
+function leggiUrl(){
+  const p = new URLSearchParams(location.search);
+  CAMPI_URL.forEach(k=>{ if(p.has(k)) $("#"+k).value = p.get(k); });
+  $("#soloScadenza").checked = p.get("scad")==="1";
+  if(p.get("arch")==="1"){ $("#conArchivio").checked = true; caricaArchivio().then(applica); }
+}
+
+function csv(){
+  const righe = S.ultimoRisultato || [];
+  if(!righe.length) return;
+  const col = ["titolo","livello","regione","tema","ente","fonte_nome",
+               "data_apertura","data_scadenza","dotazione","score_comuni","url"];
+  const cella = v => Array.isArray(v) ? `"${v.join("; ")}"`
+    : v==null ? "" : `"${String(v).replace(/"/g,'""')}"`;
+  const testo = "\uFEFF" + [col.join(";"), ...righe.map(r=>col.map(c=>cella(r[c])).join(";"))].join("\r\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([testo],{type:"text/csv;charset=utf-8"}));
+  a.download = `bandi-comuni-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click(); URL.revokeObjectURL(a.href);
+}
+
+let rimbalzo;
+$("#filtri").addEventListener("input", e=>{
+  if(e.target.id==="conArchivio" && e.target.checked){
+    $("#zonaRisultati").innerHTML = `<p class="caricamento">Caricamento dell'archivio…</p>`;
+    caricaArchivio().then(applica); return;
+  }
+  clearTimeout(rimbalzo); rimbalzo = setTimeout(applica, e.target.type==="search" ? 180 : 0);
+});
+$("#ordine").addEventListener("change", applica);
+$("#scaricaCsv").addEventListener("click", csv);
+$("#azzera").addEventListener("click", ()=>{
+  $("#filtri").reset(); $("#ordine").value="scadenza"; applica();
+});
+$("#filtri").addEventListener("submit", e=>e.preventDefault());
+
+carica();
+</script>
+</body>
+</html>
