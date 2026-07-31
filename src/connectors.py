@@ -322,3 +322,46 @@ class PugliaConnettore(Connettore):
                 raw={"stato_fonte": stato},
             ))
         return out
+
+
+# --------------------------------------------------------------------------- PA digitale 2026
+
+
+class PaDigitaleConnettore(Connettore):
+    """Avvisi di PA digitale 2026 (Dipartimento per la trasformazione digitale).
+
+    Il portale e' una SPA Next.js, ma il Team Digitale pubblica l'anagrafica degli
+    avvisi come open data versionati su GitHub. Unica fonte finora con un campo
+    'soggetti_destinatari' esplicito: la platea non va dedotta dal testo.
+    """
+
+    id = "padigitale2026"
+    nome = "PA digitale 2026"
+    livello = "nazionale"
+    URL = ("https://raw.githubusercontent.com/teamdigitale/"
+           "padigitale2026-opendata/main/data/avvisi.json")
+    PAGINA = "https://padigitale2026.gov.it/avvisi"
+
+    def fetch(self) -> list[Bando]:
+        r = self.http.get(self.URL)
+        r.raise_for_status()
+        out = []
+        for x in r.json():
+            titolo = (x.get("titolo") or "").strip()
+            if not titolo:
+                continue
+            dest = x.get("soggetti_destinatari") or ""
+            out.append(self._b(
+                titolo=titolo,
+                url=self.PAGINA,
+                ente="Dipartimento per la trasformazione digitale",
+                descrizione=x.get("misura") or "",
+                data_apertura=parse_data(x.get("data_inizio_bando")),
+                data_scadenza=parse_data(x.get("data_fine_bando")),
+                dotazione=x.get("totale_importo_stanziato"),
+                beneficiari=[d.strip() for d in re.split(r"[,;/]", dest) if d.strip()],
+                tema="digitalizzazione",
+                raw={"misura": x.get("misura"), "stato_fonte": x.get("stato"),
+                     "totale_importo_misura": x.get("totale_importo_misura")},
+            ))
+        return out

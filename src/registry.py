@@ -5,7 +5,7 @@ import sys
 import traceback
 import warnings
 
-from connectors import (CkanDiscovery, PloneConnettore, RssConnettore,
+from connectors import (PaDigitaleConnettore, CkanDiscovery, PloneConnettore, RssConnettore,
                         SediaConnettore, SocrataConnettore, PugliaConnettore)
 from html_connector import HtmlConnettore
 from core import Http, connect, log_ingest, salva
@@ -42,6 +42,12 @@ FONTI = [
                  scadenza="chiusura_adesione", tema="tipo_strumento", ordine="codice_bando"), bando_certo=True, scadenza_esposta=True)),
     (SediaConnettore, dict(bando_certo=True, scadenza_esposta=True)),
     (PugliaConnettore, dict(bando_certo=True, scadenza_esposta=True)),
+    (PaDigitaleConnettore, dict(bando_certo=True, scadenza_esposta=True)),
+    # La Serie Generale pubblica di tutto: niente bando_certo, filtra il classificatore.
+    (RssConnettore, dict(
+        id="gazzetta-sg", nome="Gazzetta Ufficiale - Serie Generale", livello="nazionale",
+        feed="https://www.gazzettaufficiale.it/rss/SG",
+        ente="Gazzetta Ufficiale della Repubblica Italiana")),
 
     # --- RSS -----------------------------------------------------------------
     (RssConnettore, dict(

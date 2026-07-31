@@ -207,6 +207,11 @@ NEGATIVI = {
     r"\bassunzione\b": -2.0,
     r"\bmanifestazione di interesse per l['e ]affidamento\b": -2.0,
     r"\bgara d['e ]appalto\b": -3.0,
+    # la sola presenza di "Comuni" non basta: va letta la negazione
+    r"\b(?:divers[ie]|altr[ei])\s+da(?:i|gli)?\s+comuni\b": -6.0,
+    r"\bad esclusione dei comuni\b": -6.0,
+    r"\besclus[ie] i comuni\b": -6.0,
+    r"\bnon rivolt[oa] ai comuni\b": -6.0,
     r"\bprocedura aperta per\b": -2.0,
 }
 
