@@ -44,12 +44,12 @@ def esporta(soglia: float = SOGLIA_RILEVANZA) -> dict:
     ph = ",".join("?" * len(STATI_ATTIVI))
 
     utili = [_riga(r) for r in con.execute(
-        f"SELECT * FROM bandi WHERE stato IN ({ph}) AND score_comuni >= ? AND score_bando >= 0 "
+        f"SELECT * FROM bandi WHERE {PERIMETRO} AND stato IN ({ph}) AND score_comuni >= ? AND score_bando >= 0 "
         f"ORDER BY (data_scadenza IS NULL), data_scadenza, score_comuni DESC",
         (*STATI_ATTIVI, soglia))]
 
     archivio = [_riga(r) for r in con.execute(
-        f"SELECT * FROM bandi WHERE NOT (stato IN ({ph}) AND score_comuni >= ? AND score_bando >= 0) "
+        f"SELECT * FROM bandi WHERE {PERIMETRO} AND NOT (stato IN ({ph}) AND score_comuni >= ? AND score_bando >= 0) "
         f"ORDER BY (data_scadenza IS NULL), data_scadenza DESC LIMIT 5000",
         (*STATI_ATTIVI, soglia))]
 
@@ -67,8 +67,8 @@ def esporta(soglia: float = SOGLIA_RILEVANZA) -> dict:
     faccette = {}
     for campo in ("regione", "livello", "tema", "stato", "scadenza_stato"):
         faccette[campo] = {r[0]: r[1] for r in con.execute(
-            f"SELECT COALESCE({campo},'n.d.'), COUNT(*) FROM bandi"
-            f" WHERE stato IN ({ph}) AND score_comuni >= ? AND score_bando >= 0"
+            f"SELECT COALESCE({campo},'n.d.'), COUNT(*) FROM bandi WHERE {PERIMETRO} AND"
+            f" stato IN ({ph}) AND score_comuni >= ? AND score_bando >= 0"
             f" GROUP BY 1 ORDER BY 2 DESC", (*STATI_ATTIVI, soglia))}
 
     ora = datetime.now(timezone.utc).isoformat(timespec="seconds")
