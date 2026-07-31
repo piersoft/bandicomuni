@@ -105,6 +105,8 @@ select,input[type=search],input[type=number]{width:100%;font:inherit;font-size:.
   font-family:var(--mono);font-size:.72rem}
 .fonti-elenco li{border:1px solid var(--bordo);border-radius:2px;padding:.1rem .4rem;background:var(--foglio)}
 .fonti-elenco .ko{border-color:var(--urgente);color:var(--urgente)}
+.licenze{border-left:2px solid var(--bordo);padding-left:.9rem;max-width:78ch}
+.licenze strong{color:var(--inchiostro)}
 
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -192,6 +194,21 @@ select,input[type=search],input[type=number]{width:100%;font:inherit;font-size:.
   che pubblica il bando.</strong></p>
   <p>Dati grezzi: <a href="data/bandi.json">bandi.json</a> · <a href="data/meta.json">meta.json</a> ·
   Codice: <a href="https://github.com/piersoft/bandicomuni">github.com/piersoft/bandicomuni</a></p>
+
+  <h2>Licenze</h2>
+  <p class="licenze">
+    <strong>Dati</strong> —
+    <a href="https://creativecommons.org/licenses/by/4.0/deed.it" rel="license">CC BY 4.0</a>.
+    Liberamente riutilizzabili, anche commercialmente, citando la fonte:
+    <em>BandiPA — github.com/piersoft/bandicomuni</em>.
+    I testi originali dei bandi restano degli enti che li pubblicano, con le rispettive licenze
+    (<a href="https://github.com/piersoft/bandicomuni/blob/main/LICENSE-DATI.md">dettaglio</a>).
+    <br>
+    <strong>Codice sorgente</strong> —
+    <a href="https://www.gnu.org/licenses/agpl-3.0.html" rel="license">GNU AGPL v3</a>.
+    Chi pubblica una versione modificata come servizio in rete deve renderne disponibile
+    il codice.
+  </p>
 </footer>
 
 <script>

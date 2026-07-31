@@ -84,3 +84,11 @@ python -m http.server -d ../docs 8000
   quindi il filtro per parole chiave non discrimina. Va sostituito da un filtro per programma.
 - Il dataset Socrata della Lombardia non espone i destinatari: la classificazione lavora
   solo sul titolo, con conseguente sottostima.
+
+## Licenze
+
+- **Codice sorgente**: [GNU AGPL v3](LICENSE). Se pubblichi una versione modificata come
+  servizio accessibile in rete, devi renderne disponibile il codice agli utenti.
+- **Dati** in `docs/data/`: [CC BY 4.0](LICENSE-DATI.md), con attribuzione a
+  `BandiPA — github.com/piersoft/bandicomuni`. I contenuti originali dei bandi restano
+  degli enti che li pubblicano.
