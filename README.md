@@ -20,6 +20,8 @@ Nessun server, nessun database di runtime, nessun costo di esercizio.
 
 | Fonte | Livello | Pattern |
 |---|---|---|
+| Dip. Politiche di Coesione | nazionale | HTML |
+| Min. Interno - DAIT Finanza locale | nazionale | HTML lista + dettaglio |
 | Regione Emilia-Romagna | regionale | Plone REST API (`++api++`) |
 | Regione Lombardia - Bandi Online | regionale | Socrata SODA (`bukx-h2uy`) |
 | EU Funding & Tenders Portal | UE | search-api SEDIA |
@@ -29,12 +31,33 @@ Nessun server, nessun database di runtime, nessun costo di esercizio.
 `src/probe_sources.py` sonda i portali per scoprire quale pattern supportano: da rieseguire
 prima di aggiungere una fonte nuova.
 
+## Fonti nazionali non accessibili
+
+| Fonte | Ostacolo |
+|---|---|
+| Italia Domani | 403 anche con User-Agent browser: protezione anti-bot |
+| PA digitale 2026 | contenuto caricato via JavaScript, nessuna API pubblica trovata |
+| IFEL / pnrrcomuni | 503: protezione anti-bot |
+| Gazzetta Ufficiale | gli endpoint RSS restituiscono HTML, non feed validi |
+
+Richiedono un browser headless (Playwright) nel workflow.
+
 ## Criterio di rilevanza
 
-Ogni bando riceve uno `score_comuni` da un classificatore a regole. I termini pesano di piu'
+La selezione usa **due assi indipendenti**.
+
+`score_comuni` - il Comune e' un possibile beneficiario. Ogni bando riceve uno `score_comuni` da un classificatore a regole. I termini pesano di piu'
 se compaiono nel campo destinatari (x1.8) o subito dopo marcatori come "possono presentare
 domanda" (x1.5), cosi' che l'ente *erogatore* non venga scambiato per il *beneficiario*.
-Soglia di pubblicazione: `score >= 2.0`. Sotto soglia il bando finisce in `archivio.json`.
+`score_bando` - e' un'opportunita' ancora aperta e non un atto gia' concluso. Serve perche'
+molte fonti istituzionali pubblicano soprattutto riparti, trasferimenti e graduatorie: citano
+i Comuni, ma non c'e' nulla da presentare. Le fonti che sono cataloghi di soli bandi
+(`bando_certo=True`) ricevono un bonus strutturale: li' l'informazione sta nella natura della
+fonte, non nel testo.
+
+Soglia di pubblicazione: `score_comuni >= 2.0` **e** `score_bando >= 0`. La seconda condizione
+scarta l'evidenza negativa ma ammette i casi ambigui: uno zero significa "nessun indizio",
+non "non e' un bando".
 
 ## Uso locale
 

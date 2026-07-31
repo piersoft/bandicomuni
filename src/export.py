@@ -20,7 +20,7 @@ STATI_ATTIVI = ("aperto", "in scadenza", "programmato")
 
 CAMPI = ("uid", "titolo", "url", "fonte_nome", "livello", "regione", "ente",
          "descrizione", "data_apertura", "data_scadenza", "dotazione",
-         "beneficiari", "tema", "score_comuni", "stato")
+         "beneficiari", "tema", "score_comuni", "score_bando", "stato")
 
 
 def _riga(r) -> dict:
@@ -39,19 +39,19 @@ def esporta(soglia: float = SOGLIA_RILEVANZA) -> dict:
     ph = ",".join("?" * len(STATI_ATTIVI))
 
     utili = [_riga(r) for r in con.execute(
-        f"SELECT * FROM bandi WHERE stato IN ({ph}) AND score_comuni >= ? "
+        f"SELECT * FROM bandi WHERE stato IN ({ph}) AND score_comuni >= ? AND score_bando >= 0 "
         f"ORDER BY (data_scadenza IS NULL), data_scadenza, score_comuni DESC",
         (*STATI_ATTIVI, soglia))]
 
     archivio = [_riga(r) for r in con.execute(
-        f"SELECT * FROM bandi WHERE NOT (stato IN ({ph}) AND score_comuni >= ?) "
+        f"SELECT * FROM bandi WHERE NOT (stato IN ({ph}) AND score_comuni >= ? AND score_bando >= 0) "
         f"ORDER BY (data_scadenza IS NULL), data_scadenza DESC LIMIT 5000",
         (*STATI_ATTIVI, soglia))]
 
     fonti = [dict(r) for r in con.execute(
         "SELECT fonte_id, fonte_nome, livello, regione, COUNT(*) n_totali,"
         " SUM(CASE WHEN stato IN ('aperto','in scadenza','programmato')"
-        "      AND score_comuni >= ? THEN 1 ELSE 0 END) n_utili"
+        "      AND score_comuni >= ? AND score_bando >= 0 THEN 1 ELSE 0 END) n_utili"
         " FROM bandi GROUP BY fonte_id ORDER BY n_utili DESC", (soglia,))]
 
     log = [dict(r) for r in con.execute(
@@ -63,7 +63,7 @@ def esporta(soglia: float = SOGLIA_RILEVANZA) -> dict:
     for campo in ("regione", "livello", "tema", "stato"):
         faccette[campo] = {r[0]: r[1] for r in con.execute(
             f"SELECT COALESCE({campo},'n.d.'), COUNT(*) FROM bandi"
-            f" WHERE stato IN ({ph}) AND score_comuni >= ?"
+            f" WHERE stato IN ({ph}) AND score_comuni >= ? AND score_bando >= 0"
             f" GROUP BY 1 ORDER BY 2 DESC", (*STATI_ATTIVI, soglia))}
 
     ora = datetime.now(timezone.utc).isoformat(timespec="seconds")

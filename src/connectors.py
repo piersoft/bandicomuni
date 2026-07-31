@@ -31,7 +31,13 @@ class Connettore:
         kw.setdefault("fonte_nome", self.nome)
         kw.setdefault("livello", self.livello)
         kw.setdefault("regione", self.regione)
-        return classifica(Bando(**kw))
+        b = classifica(Bando(**kw))
+        # Alcune fonti sono cataloghi di soli bandi (Plone portal_type=Bando,
+        # anagrafica Socrata, calls SEDIA): li' l'essere un bando e' garantito
+        # dalla struttura della fonte, non va cercato nel testo del titolo.
+        if self.cfg.get("bando_certo"):
+            b.score_bando = round(b.score_bando + 2.5, 2)
+        return b
 
 
 # --------------------------------------------------------------------------- Plone

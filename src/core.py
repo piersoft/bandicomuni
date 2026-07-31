@@ -149,6 +149,7 @@ class Bando:
     beneficiari: list[str] = field(default_factory=list)
     tema: str | None = None
     score_comuni: float = 0.0
+    score_bando: float = 0.0
     raw: dict = field(default_factory=dict)
 
     @property
@@ -233,6 +234,50 @@ def _finestre_destinatari(testo: str) -> str:
     return " ".join(out)
 
 
+
+# --- Secondo asse: e' un bando aperto a cui candidarsi, o un atto gia' concluso? ---
+# Serve perche' molte fonti istituzionali (DAIT in primis) pubblicano in prevalenza
+# riparti, trasferimenti e graduatorie: citano i Comuni, ma non c'e' nulla da presentare.
+APERTURA = {
+    r"\bavviso pubblico\b": 2.5,
+    r"\bbando\b": 2.0,
+    r"\bmanifestazione di interesse\b": 1.5,
+    r"\b(?:present\w+|inoltr\w+)\s+(?:la\s+)?(?:domanda|istanza|candidatura|proposta)": 2.5,
+    r"\btermin[ei] (?:di|per la) presentazione\b": 2.5,
+    r"\bscadenz\w*\b": 1.5,
+    r"\bcandidatur\w*\b": 1.5,
+    r"\bentro il \d{1,2}\b": 1.5,
+    r"\brichiest[ae] di contributo\b": 1.5,
+    r"\bcall for proposals\b": 2.5,
+    r"\bapertura (?:dei )?termini\b": 2.0,
+}
+CHIUSURA = {
+    r"\bdecreto di riparto\b": -3.0,
+    r"\briparto\b": -2.0,
+    r"\btrasferiment[oi]\b": -2.0,
+    r"\berogazion[ei]\b": -1.5,
+    r"\bgraduatoria (?:definitiva|approvata|finale)\b": -2.5,
+    r"\belenco dei (?:beneficiari|comuni ammessi)\b": -2.5,
+    r"\bassegnazione (?:delle risorse|dei contributi)\b": -1.5,
+    r"\besiti\b": -1.5,
+    r"\bconclus[oa]\b": -1.0,
+    r"\btermini scaduti\b": -3.0,
+    r"\brendicontazion\w*\b": -1.5,
+    r"\bproroga (?:del )?cronoprogramma\b": -2.0,
+}
+
+
+def score_apertura(testo: str) -> float:
+    s = 0.0
+    for pat, peso in APERTURA.items():
+        if re.search(pat, testo):
+            s += peso
+    for pat, peso in CHIUSURA.items():
+        if re.search(pat, testo):
+            s += peso
+    return round(s, 2)
+
+
 def classifica(b: Bando) -> Bando:
     testo = " ".join(filter(None, [b.titolo, b.descrizione, " ".join(b.beneficiari)])).lower()
     zona = _finestre_destinatari(testo)
@@ -253,6 +298,7 @@ def classifica(b: Bando) -> Bando:
         if re.search(pat, testo):
             score += peso
     b.score_comuni = round(score, 2)
+    b.score_bando = score_apertura(testo)
     if not b.beneficiari and trovati:
         b.beneficiari = sorted(set(trovati))[:5]
     if not b.tema:
@@ -271,7 +317,7 @@ CREATE TABLE IF NOT EXISTS bandi (
   titolo TEXT NOT NULL, url TEXT, fonte_id TEXT, fonte_nome TEXT,
   livello TEXT, regione TEXT, ente TEXT, descrizione TEXT,
   data_pubblicazione TEXT, data_apertura TEXT, data_scadenza TEXT,
-  dotazione REAL, beneficiari TEXT, tema TEXT, score_comuni REAL,
+  dotazione REAL, beneficiari TEXT, tema TEXT, score_comuni REAL, score_bando REAL,
   stato TEXT, first_seen TEXT, last_seen TEXT, raw TEXT
 );
 CREATE INDEX IF NOT EXISTS ix_scad ON bandi(data_scadenza);
@@ -303,18 +349,18 @@ def salva(con: sqlite3.Connection, bandi: list[Bando]) -> tuple[int, int]:
             nuovi += 1
         con.execute("""
             INSERT INTO bandi (uid,titolo,url,fonte_id,fonte_nome,livello,regione,ente,descrizione,
-              data_pubblicazione,data_apertura,data_scadenza,dotazione,beneficiari,tema,score_comuni,
+              data_pubblicazione,data_apertura,data_scadenza,dotazione,beneficiari,tema,score_comuni,score_bando,
               stato,first_seen,last_seen,raw)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
             ON CONFLICT(uid) DO UPDATE SET
               titolo=excluded.titolo, url=excluded.url, descrizione=excluded.descrizione,
               data_scadenza=excluded.data_scadenza, data_apertura=excluded.data_apertura,
               dotazione=COALESCE(excluded.dotazione, bandi.dotazione),
-              tema=COALESCE(excluded.tema, bandi.tema), score_comuni=excluded.score_comuni,
+              tema=COALESCE(excluded.tema, bandi.tema), score_comuni=excluded.score_comuni, score_bando=excluded.score_bando,
               stato=excluded.stato, last_seen=excluded.last_seen
         """, (b.uid, b.titolo, b.url, b.fonte_id, b.fonte_nome, b.livello, b.regione, b.ente,
               b.descrizione[:4000], b.data_pubblicazione, b.data_apertura, b.data_scadenza,
-              b.dotazione, json.dumps(b.beneficiari, ensure_ascii=False), b.tema, b.score_comuni,
+              b.dotazione, json.dumps(b.beneficiari, ensure_ascii=False), b.tema, b.score_comuni, b.score_bando,
               b.stato, ora, ora, json.dumps(b.raw, ensure_ascii=False, default=str)[:20000]))
     con.execute("INSERT INTO bandi_fts(bandi_fts) VALUES('rebuild')")
     con.commit()

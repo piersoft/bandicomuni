@@ -7,28 +7,45 @@ import warnings
 
 from connectors import (CkanDiscovery, PloneConnettore, RssConnettore,
                         SediaConnettore, SocrataConnettore)
+from html_connector import HtmlConnettore
 from core import Http, connect, log_ingest, salva
 
 warnings.filterwarnings("ignore")
 
 FONTI = [
+    # --- Fonti nazionali (HTML) ---------------------------------------------
+    (HtmlConnettore, dict(
+        id="dpcoe", nome="Dip. Politiche di Coesione", livello="nazionale",
+        ente="Presidenza del Consiglio - Dip. per le politiche di coesione",
+        lista=["https://politichecoesione.governo.it/it/finanziamenti-avvisi-e-bandi/",
+               "https://politichecoesione.governo.it/it/documenti-ed-esiti-istituzionali/"
+               "documenti-di-attuazione-dei-finanziamenti-avvisi-e-bandi/"],
+        sel_item=".card", sel_titolo="h2 a, h3 a")),
+    (HtmlConnettore, dict(
+        id="dait", nome="Min. Interno - DAIT Finanza locale", livello="nazionale",
+        ente="Ministero dell'Interno - DAIT",
+        lista=[f"https://dait.interno.gov.it/finanza-locale/notizie?page={p}" for p in range(0, 3)],
+        sel_item=".views-row", sel_titolo="h2 a",
+        dettaglio=True, sel_corpo=".field--name-body", max_dettagli=40,
+        titolo_da_corpo=True)),
+
     # --- API strutturate -----------------------------------------------------
     (PloneConnettore, dict(
         id="rer-bandi", nome="Regione Emilia-Romagna", livello="regionale", regione="Emilia-Romagna",
-        base="https://www.regione.emilia-romagna.it/leggi-atti-bandi/bandi-finanziamenti-contributi")),
+        base="https://www.regione.emilia-romagna.it/leggi-atti-bandi/bandi-finanziamenti-contributi", bando_certo=True)),
     (SocrataConnettore, dict(
         id="lom-bandi", nome="Regione Lombardia - Bandi Online", livello="regionale", regione="Lombardia",
         dominio="https://www.dati.lombardia.it", dataset="bukx-h2uy",
         url_tpl="https://www.bandi.regione.lombardia.it/servizi/servizio/agevolazioni/{codice}",
         map=dict(titolo="titolo_bando", codice="codice_bando", ente="ente",
                  direzione="direzione_generale", apertura="apertura_adesione",
-                 scadenza="chiusura_adesione", tema="tipo_strumento", ordine="codice_bando"))),
-    (SediaConnettore, dict()),
+                 scadenza="chiusura_adesione", tema="tipo_strumento", ordine="codice_bando"), bando_certo=True)),
+    (SediaConnettore, dict(bando_certo=True)),
 
     # --- RSS -----------------------------------------------------------------
     (RssConnettore, dict(
         id="pie-bandi", nome="Regione Piemonte - Bandi", livello="regionale", regione="Piemonte",
-        feed="https://bandi.regione.piemonte.it/tutti/rss.xml", max=400)),
+        feed="https://bandi.regione.piemonte.it/tutti/rss.xml", max=400, bando_certo=True)),
     (RssConnettore, dict(
         id="cal-europa", nome="Calabria Europa", livello="regionale", regione="Calabria",
         feed="https://calabriaeuropa.regione.calabria.it/feed/", pagine=5)),
