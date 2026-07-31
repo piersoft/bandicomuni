@@ -16,6 +16,15 @@ GitHub Actions (cron 04:17 UTC)
 
 Nessun server, nessun database di runtime, nessun costo di esercizio.
 
+## Perimetro
+
+Il progetto copre **fonti europee, nazionali e della sola Regione Puglia**. I connettori delle
+altre regioni restano nel codice con `attiva=False`: riattivarli significa togliere un flag in
+`src/registry.py`, non riscrivere nulla.
+
+Il numero di bandi aperti e' spesso basso. Non e' un difetto della raccolta: fra una finestra di
+candidatura e l'altra i bandi rivolti ai Comuni sono realmente pochi.
+
 ## Fonti attive
 
 | Fonte | Livello | Pattern |

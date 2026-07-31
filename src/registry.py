@@ -12,6 +12,9 @@ from core import Http, connect, log_ingest, salva
 
 warnings.filterwarnings("ignore")
 
+# Perimetro del progetto: bandi nazionali, europei e della sola Regione Puglia.
+# Le fonti delle altre regioni restano configurate ma disattivate (attiva=False):
+# riattivarle e' questione di togliere il flag, non di riscrivere il connettore.
 FONTI = [
     # --- Fonti nazionali (HTML) ---------------------------------------------
     (HtmlConnettore, dict(
@@ -31,10 +34,10 @@ FONTI = [
 
     # --- API strutturate -----------------------------------------------------
     (PloneConnettore, dict(
-        id="rer-bandi", nome="Regione Emilia-Romagna", livello="regionale", regione="Emilia-Romagna",
+        id="rer-bandi", attiva=False, nome="Regione Emilia-Romagna", livello="regionale", regione="Emilia-Romagna",
         base="https://www.regione.emilia-romagna.it/leggi-atti-bandi/bandi-finanziamenti-contributi", bando_certo=True, scadenza_esposta=True)),
     (SocrataConnettore, dict(
-        id="lom-bandi", nome="Regione Lombardia - Bandi Online", livello="regionale", regione="Lombardia",
+        id="lom-bandi", attiva=False, nome="Regione Lombardia - Bandi Online", livello="regionale", regione="Lombardia",
         dominio="https://www.dati.lombardia.it", dataset="bukx-h2uy",
         url_tpl="https://www.bandi.regione.lombardia.it/servizi/servizio/agevolazioni/{codice}",
         map=dict(titolo="titolo_bando", codice="codice_bando", ente="ente",
@@ -51,16 +54,16 @@ FONTI = [
 
     # --- RSS -----------------------------------------------------------------
     (RssConnettore, dict(
-        id="pie-bandi", nome="Regione Piemonte - Bandi", livello="regionale", regione="Piemonte",
+        id="pie-bandi", attiva=False, nome="Regione Piemonte - Bandi", livello="regionale", regione="Piemonte",
         feed="https://bandi.regione.piemonte.it/tutti/rss.xml", max=400, bando_certo=True)),
     (RssConnettore, dict(
-        id="cal-europa", nome="Calabria Europa", livello="regionale", regione="Calabria",
+        id="cal-europa", attiva=False, nome="Calabria Europa", livello="regionale", regione="Calabria",
         feed="https://calabriaeuropa.regione.calabria.it/feed/", pagine=5)),
     (RssConnettore, dict(
-        id="sic-euroinfo", nome="EuroInfoSicilia", livello="regionale", regione="Sicilia",
+        id="sic-euroinfo", attiva=False, nome="EuroInfoSicilia", livello="regionale", regione="Sicilia",
         feed="https://www.euroinfosicilia.it/feed/", pagine=5)),
     (RssConnettore, dict(
-        id="fvg-news", nome="Regione Friuli-Venezia Giulia", livello="regionale", regione="Friuli-VG",
+        id="fvg-news", attiva=False, nome="Regione Friuli-Venezia Giulia", livello="regionale", regione="Friuli-VG",
         feed="http://www.regione.fvg.it/rafvg/cms/RAFVG/rss/notizie-in-evidenza")),
 ]
 
@@ -81,6 +84,8 @@ def esegui(solo: str | None = None):
     print("-" * 92)
     for cls, cfg in FONTI:
         c = cls(http, **cfg)
+        if cfg.get("attiva") is False and not solo:
+            continue
         if solo and c.id != solo:
             continue
         try:
