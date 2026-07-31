@@ -1,0 +1,90 @@
+name: Ingestione bandi
+
+on:
+  schedule:
+    # 04:17 UTC = 06:17 in Italia (ora legale). Minuto non tondo: meno contesa sui runner.
+    - cron: '17 4 * * *'
+  workflow_dispatch:        # esecuzione manuale dalla tab Actions
+  push:
+    paths: ['src/**', '.github/workflows/**']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ingest
+  cancel-in-progress: false
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Installa dipendenze
+        run: pip install -r requirements.txt
+
+      # Il DB e' un artefatto di build: si ricostruisce, ma conservarlo tra i run
+      # permette di mantenere first_seen e riconoscere i bandi realmente nuovi.
+      - name: Ripristina cache del database
+        uses: actions/cache/restore@v4
+        with:
+          path: src/bandi.db
+          key: bandi-db-${{ github.run_id }}
+          restore-keys: bandi-db-
+
+      - name: Esegui ingestione
+        working-directory: src
+        run: python registry.py
+        continue-on-error: true      # una fonte KO non deve bloccare la pubblicazione
+
+      - name: Esporta JSON statici
+        working-directory: src
+        run: python export.py
+
+      - name: Salva cache del database
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: src/bandi.db
+          key: bandi-db-${{ github.run_id }}
+
+      - name: Commit dei dati aggiornati
+        run: |
+          git config user.name  "bandipa-bot"
+          git config user.email "actions@github.com"
+          git add docs/data
+          # last_run.json cambia sempre: garantisce un commit giornaliero e
+          # impedisce la disattivazione del cron dopo 60 giorni di inattivita'.
+          if git diff --staged --quiet; then
+            echo "Nessuna modifica da pubblicare"
+          else
+            git commit -m "dati: aggiornamento $(date -u +%Y-%m-%d)"
+            git push
+          fi
+
+      - name: Riepilogo esecuzione
+        if: always()
+        run: |
+          echo "### Esito ingestione" >> $GITHUB_STEP_SUMMARY
+          python - <<'PY' >> $GITHUB_STEP_SUMMARY
+          import json, pathlib
+          p = pathlib.Path("docs/data/meta.json")
+          if not p.exists():
+              print("meta.json non generato"); raise SystemExit
+          m = json.loads(p.read_text())
+          t = m["totali"]
+          print(f"- Record in database: **{t['in_database']}**")
+          print(f"- Perimetro utile: **{t['perimetro_utile']}**\n")
+          print("| Fonte | Esito | Trovati |")
+          print("|---|---|---|")
+          for r in m["ultimo_ingest"]:
+              icona = "OK" if r["esito"] == "ok" else "ERRORE"
+              print(f"| {r['fonte_id']} | {icona} | {r['n_trovati']} |")
+          PY

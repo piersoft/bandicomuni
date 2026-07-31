@@ -1,0 +1,331 @@
+[
+ {
+  "regione": "Abruzzo",
+  "plone": null,
+  "ckan": null,
+  "socrata": null,
+  "rss": null,
+  "http": {
+   "https://www.regione.abruzzo.it/content/bandi": 503,
+   "https://opendata.regione.abruzzo.it": 503
+  }
+ },
+ {
+  "regione": "Basilicata",
+  "plone": null,
+  "ckan": null,
+  "socrata": null,
+  "rss": null,
+  "http": {
+   "https://www.regione.basilicata.it/giunta/site/giunta/department.jsp?dep=100435": 404,
+   "https://dati.regione.basilicata.it": 503
+  }
+ },
+ {
+  "regione": "Calabria",
+  "plone": null,
+  "ckan": null,
+  "socrata": null,
+  "rss": {
+   "n": 2,
+   "url": "https://calabriaeuropa.regione.calabria.it/feed/"
+  },
+  "http": {
+   "https://calabriaeuropa.regione.calabria.it/bandi": 200,
+   "https://www.regione.calabria.it": 200
+  }
+ },
+ {
+  "regione": "Campania",
+  "plone": null,
+  "ckan": null,
+  "socrata": null,
+  "rss": null,
+  "http": {
+   "https://www.regione.campania.it/regione/it/tematiche/bandi-e-avvisi": 403,
+   "https://dati.regione.campania.it": 200
+  }
+ },
+ {
+  "regione": "Emilia-Romagna",
+  "plone": {
+   "n": 67,
+   "url": "https://www.regione.emilia-romagna.it/leggi-atti-bandi/bandi-finanziamenti-contributi/++api++/@search?portal_type=Bando&b_size=1"
+  },
+  "ckan": {
+   "n": 1,
+   "url": "https://dati.emilia-romagna.it/api/3/action/"
+  },
+  "socrata": null,
+  "rss": null,
+  "http": {
+   "https://www.regione.emilia-romagna.it/leggi-atti-bandi/bandi-finanziamenti-contributi": 200,
+   "https://dati.emilia-romagna.it": 200
+  }
+ },
+ {
+  "regione": "Friuli-VG",
+  "plone": null,
+  "ckan": null,
+  "socrata": null,
+  "rss": {
+   "n": 1,
+   "url": "http://www.regione.fvg.it/rafvg/cms/RAFVG/rss/notizie-in-evidenza"
+  },
+  "http": {
+   "https://bandi.regione.fvg.it": 503,
+   "https://www.regione.fvg.it": 200,
+   "https://www.dati.friuliveneziagiulia.it": 200
+  }
+ },
+ {
+  "regione": "Lazio",
+  "plone": null,
+  "ckan": null,
+  "socrata": null,
+  "rss": null,
+  "http": {
+   "https://www.regione.lazio.it/enti/bandi": 404,
+   "https://dati.lazio.it": 503
+  }
+ },
+ {
+  "regione": "Liguria",
+  "plone": null,
+  "ckan": {
+   "n": 2,
+   "url": "https://dati.regione.liguria.it/api/3/action/"
+  },
+  "socrata": null,
+  "rss": null,
+  "http": {
+   "https://www.regione.liguria.it/homepage/bandi.html": 404,
+   "https://dati.regione.liguria.it": 200
+  }
+ },
+ {
+  "regione": "Lombardia",
+  "plone": null,
+  "ckan": null,
+  "socrata": null,
+  "rss": {
+   "n": 1,
+   "url": "/catalog.rss"
+  },
+  "http": {
+   "https://www.bandi.regione.lombardia.it": 200,
+   "https://www.dati.lombardia.it": "Timeout"
+  }
+ },
+ {
+  "regione": "Marche",
+  "plone": null,
+  "ckan": null,
+  "socrata": null,
+  "rss": null,
+  "http": {
+   "https://www.regione.marche.it/Entra-in-Regione/Bandi": 200,
+   "https://dati.regione.marche.it": 503
+  }
+ },
+ {
+  "regione": "Molise",
+  "plone": null,
+  "ckan": null,
+  "socrata": null,
+  "rss": null,
+  "http": {
+   "https://www.regione.molise.it": 200,
+   "https://dati.regione.molise.it": "ConnectionError"
+  }
+ },
+ {
+  "regione": "Piemonte",
+  "plone": null,
+  "ckan": null,
+  "socrata": null,
+  "rss": {
+   "n": 1,
+   "url": "https://bandi.regione.piemonte.it/tutti/rss.xml"
+  },
+  "http": {
+   "https://bandi.regione.piemonte.it": 200,
+   "https://www.dati.piemonte.it": 200
+  }
+ },
+ {
+  "regione": "Puglia",
+  "plone": null,
+  "ckan": null,
+  "socrata": null,
+  "rss": null,
+  "http": {
+   "https://www.regione.puglia.it/web/bandi-e-avvisi": 404,
+   "https://www.sistema.puglia.it": 503,
+   "https://dati.puglia.it": 200
+  }
+ },
+ {
+  "regione": "Sardegna",
+  "plone": null,
+  "ckan": null,
+  "socrata": null,
+  "rss": {
+   "n": 5,
+   "url": "/rss/hp.xml"
+  },
+  "http": {
+   "https://www.regione.sardegna.it/servizi/cittadino/contributi": 404,
+   "https://dati.regione.sardegna.it": 200
+  }
+ },
+ {
+  "regione": "Sicilia",
+  "plone": null,
+  "ckan": null,
+  "socrata": null,
+  "rss": {
+   "n": 1,
+   "url": "https://www.euroinfosicilia.it/feed/"
+  },
+  "http": {
+   "https://www.regione.sicilia.it": 200,
+   "https://dati.regione.sicilia.it": 503,
+   "https://www.euroinfosicilia.it": 200
+  }
+ },
+ {
+  "regione": "Toscana",
+  "plone": null,
+  "ckan": {
+   "n": 3,
+   "url": "https://dati.toscana.it/api/3/action/"
+  },
+  "socrata": null,
+  "rss": null,
+  "http": {
+   "https://www.regione.toscana.it/bandi": 200,
+   "https://dati.toscana.it": 200
+  }
+ },
+ {
+  "regione": "Trento",
+  "plone": null,
+  "ckan": {
+   "n": 7,
+   "url": "https://dati.trentino.it/api/3/action/"
+  },
+  "socrata": null,
+  "rss": {
+   "n": 1,
+   "url": "/revision/list?format=atom"
+  },
+  "http": {
+   "https://www.provincia.tn.it": 200,
+   "https://dati.trentino.it": 200
+  }
+ },
+ {
+  "regione": "Bolzano",
+  "plone": null,
+  "ckan": {
+   "n": 1,
+   "url": "https://data.civis.bz.it/api/3/action/"
+  },
+  "socrata": null,
+  "rss": null,
+  "http": {
+   "https://www.provincia.bz.it": 200,
+   "https://data.civis.bz.it": 200
+  }
+ },
+ {
+  "regione": "Umbria",
+  "plone": null,
+  "ckan": null,
+  "socrata": null,
+  "rss": null,
+  "http": {
+   "https://www.regione.umbria.it/bandi": 404,
+   "https://dati.umbria.it": "ConnectionError"
+  }
+ },
+ {
+  "regione": "Valle d'Aosta",
+  "plone": null,
+  "ckan": null,
+  "socrata": null,
+  "rss": null,
+  "http": {
+   "https://www.regione.vda.it": 200,
+   "https://opendata.regione.vda.it": "ConnectionError"
+  }
+ },
+ {
+  "regione": "Veneto",
+  "plone": null,
+  "ckan": null,
+  "socrata": null,
+  "rss": {
+   "n": 1,
+   "url": "https://dati.veneto.it/rss.xml"
+  },
+  "http": {
+   "https://bandi.regione.veneto.it": 200,
+   "https://dati.veneto.it": 200
+  }
+ },
+ {
+  "regione": "NAZ-dati.gov.it",
+  "plone": null,
+  "ckan": {
+   "n": 263,
+   "url": "https://www.dati.gov.it/opendata/api/3/action/"
+  },
+  "socrata": null,
+  "rss": null,
+  "http": {
+   "https://www.dati.gov.it/opendata": 403
+  }
+ },
+ {
+  "regione": "NAZ-coesione",
+  "plone": null,
+  "ckan": null,
+  "socrata": null,
+  "rss": null,
+  "http": {
+   "https://politichecoesione.governo.it/it/finanziamenti-avvisi-e-bandi": 200
+  }
+ },
+ {
+  "regione": "NAZ-italiadomani",
+  "plone": null,
+  "ckan": null,
+  "socrata": null,
+  "rss": null,
+  "http": {
+   "https://www.italiadomani.gov.it/it/opportunita/bandi-amministrazioni-titolari.html": 403
+  }
+ },
+ {
+  "regione": "NAZ-padigitale",
+  "plone": null,
+  "ckan": null,
+  "socrata": null,
+  "rss": null,
+  "http": {
+   "https://padigitale2026.gov.it": 200
+  }
+ },
+ {
+  "regione": "NAZ-dait",
+  "plone": null,
+  "ckan": null,
+  "socrata": null,
+  "rss": null,
+  "http": {
+   "https://dait.interno.gov.it/finanza-locale": 200
+  }
+ }
+]
