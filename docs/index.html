@@ -70,6 +70,7 @@ select,input[type=search],input[type=number]{width:100%;font:inherit;font-size:.
 .scheda[data-urgenza=urgente]::before{background:var(--urgente)}
 .scheda[data-urgenza=medio]::before{background:var(--medio)}
 .scheda[data-urgenza=lontano]::before{background:var(--lontano)}
+.scheda[data-urgenza=sportello]::before{background:var(--tenue)}
 .cappello{display:flex;flex-wrap:wrap;gap:.45rem;align-items:center;
   font-family:var(--mono);font-size:.68rem;color:var(--tenue);margin-bottom:.35rem}
 .pillola{border:1px solid var(--bordo);border-radius:2px;padding:.05rem .35rem;
@@ -87,6 +88,7 @@ select,input[type=search],input[type=number]{width:100%;font:inherit;font-size:.
 .scadenza[data-urgenza=medio]{color:var(--medio)}
 .scadenza[data-urgenza=lontano]{color:var(--lontano)}
 .scadenza[data-urgenza=ignoto]{color:var(--ignoto);font-weight:400}
+.scadenza[data-urgenza=sportello]{color:var(--tenue);font-weight:500}
 
 .completezza{display:flex;gap:2px;margin-left:auto;align-items:center}
 .completezza .tacca{width:13px;height:4px;background:var(--bordo);border-radius:1px}
@@ -226,7 +228,13 @@ const urgenzaDi = g => g===null ? "ignoto" : g<0 ? "ignoto" : g<=15 ? "urgente" 
 
 function etichettaScadenza(b){
   const g = giorniA(b.data_scadenza);
-  if(g===null) return {testo:"scadenza non pubblicata", urgenza:"ignoto"};
+  if(g===null){
+    // la fonte espone il campo e lo lascia vuoto: il termine non esiste,
+    // non e' un dato che ci manca
+    return b.scadenza_stato==="assente"
+      ? {testo:"senza termine — a sportello", urgenza:"sportello"}
+      : {testo:"scadenza da verificare alla fonte", urgenza:"ignoto"};
+  }
   if(g<0)  return {testo:"termine superato", urgenza:"ignoto"};
   if(g===0) return {testo:"scade oggi", urgenza:"urgente"};
   const data = new Date(b.data_scadenza+"T00:00:00")
@@ -346,7 +354,7 @@ const esc = t => (t??"").toString().replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt
 
 function scheda(b){
   const s = etichettaScadenza(b);
-  const tacche = [!!b.data_scadenza, b.dotazione!=null,
+  const tacche = [!!b.data_scadenza || b.scadenza_stato==="assente", b.dotazione!=null,
                   (b.beneficiari||[]).length>0, !!b.tema];
   const piene = tacche.filter(Boolean).length;
   return `<li class="scheda" data-urgenza="${s.urgenza}">

@@ -150,6 +150,9 @@ class Bando:
     tema: str | None = None
     score_comuni: float = 0.0
     score_bando: float = 0.0
+    # 'data' = termine noto | 'assente' = la fonte espone il campo ed e' vuoto
+    # (tipico dei bandi a sportello) | 'ignota' = non estratta, limite nostro
+    scadenza_stato: str = "ignota"
     raw: dict = field(default_factory=dict)
 
     @property
@@ -317,7 +320,7 @@ CREATE TABLE IF NOT EXISTS bandi (
   titolo TEXT NOT NULL, url TEXT, fonte_id TEXT, fonte_nome TEXT,
   livello TEXT, regione TEXT, ente TEXT, descrizione TEXT,
   data_pubblicazione TEXT, data_apertura TEXT, data_scadenza TEXT,
-  dotazione REAL, beneficiari TEXT, tema TEXT, score_comuni REAL, score_bando REAL,
+  dotazione REAL, beneficiari TEXT, tema TEXT, score_comuni REAL, score_bando REAL, scadenza_stato TEXT,
   stato TEXT, first_seen TEXT, last_seen TEXT, raw TEXT
 );
 CREATE INDEX IF NOT EXISTS ix_scad ON bandi(data_scadenza);
@@ -335,7 +338,8 @@ CREATE TABLE IF NOT EXISTS ingest_log (
 # Colonne aggiunte dopo la prima release. CREATE TABLE IF NOT EXISTS non le
 # introduce in un DB preesistente (es. quello ripristinato dalla cache di Actions),
 # quindi vanno applicate esplicitamente a ogni avvio.
-MIGRAZIONI = {"score_bando": "REAL DEFAULT 0"}
+MIGRAZIONI = {"score_bando": "REAL DEFAULT 0",
+              "scadenza_stato": "TEXT DEFAULT 'ignota'"}
 
 
 def connect(path: Path = DB_PATH) -> sqlite3.Connection:
@@ -360,18 +364,18 @@ def salva(con: sqlite3.Connection, bandi: list[Bando]) -> tuple[int, int]:
             nuovi += 1
         con.execute("""
             INSERT INTO bandi (uid,titolo,url,fonte_id,fonte_nome,livello,regione,ente,descrizione,
-              data_pubblicazione,data_apertura,data_scadenza,dotazione,beneficiari,tema,score_comuni,score_bando,
+              data_pubblicazione,data_apertura,data_scadenza,dotazione,beneficiari,tema,score_comuni,score_bando,scadenza_stato,
               stato,first_seen,last_seen,raw)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
             ON CONFLICT(uid) DO UPDATE SET
               titolo=excluded.titolo, url=excluded.url, descrizione=excluded.descrizione,
               data_scadenza=excluded.data_scadenza, data_apertura=excluded.data_apertura,
               dotazione=COALESCE(excluded.dotazione, bandi.dotazione),
-              tema=COALESCE(excluded.tema, bandi.tema), score_comuni=excluded.score_comuni, score_bando=excluded.score_bando,
+              tema=COALESCE(excluded.tema, bandi.tema), score_comuni=excluded.score_comuni, score_bando=excluded.score_bando, scadenza_stato=excluded.scadenza_stato,
               stato=excluded.stato, last_seen=excluded.last_seen
         """, (b.uid, b.titolo, b.url, b.fonte_id, b.fonte_nome, b.livello, b.regione, b.ente,
               b.descrizione[:4000], b.data_pubblicazione, b.data_apertura, b.data_scadenza,
-              b.dotazione, json.dumps(b.beneficiari, ensure_ascii=False), b.tema, b.score_comuni, b.score_bando,
+              b.dotazione, json.dumps(b.beneficiari, ensure_ascii=False), b.tema, b.score_comuni, b.score_bando, b.scadenza_stato,
               b.stato, ora, ora, json.dumps(b.raw, ensure_ascii=False, default=str)[:20000]))
     con.execute("INSERT INTO bandi_fts(bandi_fts) VALUES('rebuild')")
     con.commit()

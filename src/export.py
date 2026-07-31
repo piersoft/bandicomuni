@@ -20,7 +20,8 @@ STATI_ATTIVI = ("aperto", "in scadenza", "programmato")
 
 CAMPI = ("uid", "titolo", "url", "fonte_nome", "livello", "regione", "ente",
          "descrizione", "data_apertura", "data_scadenza", "dotazione",
-         "beneficiari", "tema", "score_comuni", "score_bando", "stato")
+         "beneficiari", "tema", "score_comuni", "score_bando", "stato",
+         "scadenza_stato")
 
 
 def _riga(r) -> dict:
@@ -60,7 +61,7 @@ def esporta(soglia: float = SOGLIA_RILEVANZA) -> dict:
         " ORDER BY ts DESC LIMIT 40")]
 
     faccette = {}
-    for campo in ("regione", "livello", "tema", "stato"):
+    for campo in ("regione", "livello", "tema", "stato", "scadenza_stato"):
         faccette[campo] = {r[0]: r[1] for r in con.execute(
             f"SELECT COALESCE({campo},'n.d.'), COUNT(*) FROM bandi"
             f" WHERE stato IN ({ph}) AND score_comuni >= ? AND score_bando >= 0"

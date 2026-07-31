@@ -46,6 +46,11 @@ jobs:
         # dentro registry.py e finisce in ingest_log. Se invece fallisce l'intero
         # script (es. schema incompatibile) il job deve fermarsi, non fingere successo.
 
+      - name: Arricchisci le schede incomplete
+        working-directory: src
+        run: python arricchimento.py
+        continue-on-error: true
+
       - name: Esporta JSON statici
         working-directory: src
         run: python export.py

@@ -37,6 +37,16 @@ class Connettore:
         # dalla struttura della fonte, non va cercato nel testo del titolo.
         if self.cfg.get("bando_certo"):
             b.score_bando = round(b.score_bando + 2.5, 2)
+
+        # Distingue l'assenza reale dal nostro limite di estrazione.
+        # Se la fonte espone un campo scadenza dedicato e lo lascia vuoto,
+        # il bando quel termine non ce l'ha (tipicamente: procedura a sportello).
+        if b.data_scadenza:
+            b.scadenza_stato = "data"
+        elif self.cfg.get("scadenza_esposta"):
+            b.scadenza_stato = "assente"
+        else:
+            b.scadenza_stato = "ignota"
         return b
 
 

@@ -32,16 +32,16 @@ FONTI = [
     # --- API strutturate -----------------------------------------------------
     (PloneConnettore, dict(
         id="rer-bandi", nome="Regione Emilia-Romagna", livello="regionale", regione="Emilia-Romagna",
-        base="https://www.regione.emilia-romagna.it/leggi-atti-bandi/bandi-finanziamenti-contributi", bando_certo=True)),
+        base="https://www.regione.emilia-romagna.it/leggi-atti-bandi/bandi-finanziamenti-contributi", bando_certo=True, scadenza_esposta=True)),
     (SocrataConnettore, dict(
         id="lom-bandi", nome="Regione Lombardia - Bandi Online", livello="regionale", regione="Lombardia",
         dominio="https://www.dati.lombardia.it", dataset="bukx-h2uy",
         url_tpl="https://www.bandi.regione.lombardia.it/servizi/servizio/agevolazioni/{codice}",
         map=dict(titolo="titolo_bando", codice="codice_bando", ente="ente",
                  direzione="direzione_generale", apertura="apertura_adesione",
-                 scadenza="chiusura_adesione", tema="tipo_strumento", ordine="codice_bando"), bando_certo=True)),
-    (SediaConnettore, dict(bando_certo=True)),
-    (PugliaConnettore, dict(bando_certo=True)),
+                 scadenza="chiusura_adesione", tema="tipo_strumento", ordine="codice_bando"), bando_certo=True, scadenza_esposta=True)),
+    (SediaConnettore, dict(bando_certo=True, scadenza_esposta=True)),
+    (PugliaConnettore, dict(bando_certo=True, scadenza_esposta=True)),
 
     # --- RSS -----------------------------------------------------------------
     (RssConnettore, dict(
