@@ -16,6 +16,10 @@ from core import connect
 
 DOCS = Path(__file__).resolve().parent.parent / "docs" / "data"
 SOGLIA_RILEVANZA = 2.0
+# Perimetro del progetto. Applicato qui e non con una cancellazione una tantum:
+# il DB viaggia in cache fra le esecuzioni e conserva i record delle fonti
+# disattivate, che altrimenti tornerebbero a comparire nell'export.
+PERIMETRO = "(livello IN ('UE','nazionale') OR regione = 'Puglia')"
 STATI_ATTIVI = ("aperto", "in scadenza", "programmato")
 
 CAMPI = ("uid", "titolo", "url", "fonte_nome", "livello", "regione", "ente",
@@ -53,7 +57,7 @@ def esporta(soglia: float = SOGLIA_RILEVANZA) -> dict:
         "SELECT fonte_id, fonte_nome, livello, regione, COUNT(*) n_totali,"
         " SUM(CASE WHEN stato IN ('aperto','in scadenza','programmato')"
         "      AND score_comuni >= ? AND score_bando >= 0 THEN 1 ELSE 0 END) n_utili"
-        " FROM bandi GROUP BY fonte_id ORDER BY n_utili DESC", (soglia,))]
+        f" FROM bandi WHERE {PERIMETRO} GROUP BY fonte_id ORDER BY n_utili DESC", (soglia,))]
 
     log = [dict(r) for r in con.execute(
         "SELECT fonte_id, esito, n_trovati, n_nuovi, messaggio FROM ingest_log"
@@ -71,7 +75,7 @@ def esporta(soglia: float = SOGLIA_RILEVANZA) -> dict:
     meta = {
         "generato": ora,
         "soglia_rilevanza": soglia,
-        "totali": {"in_database": con.execute("SELECT COUNT(*) FROM bandi").fetchone()[0],
+        "totali": {"in_database": con.execute(f"SELECT COUNT(*) FROM bandi WHERE {PERIMETRO}").fetchone()[0],
                    "perimetro_utile": len(utili), "archivio": len(archivio)},
         "faccette": faccette,
         "fonti": fonti,

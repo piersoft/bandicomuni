@@ -278,7 +278,14 @@ class PugliaConnettore(Connettore):
     nome = "Regione Puglia - Catalogo bandi"
     livello = "regionale"
     regione = "Puglia"
-    URL = "https://sistema.regione.puglia.it/catalogo-bandi"
+    PORTLET = "it_servizidigitali_catalogobandi_CatalogoBandiFrontendPortlet"
+    BASE = "https://sistema.regione.puglia.it/catalogo-bandi"
+    # Il portlet filtra la platea alla fonte: CITTADINI | IMPRESE | ENTI_OPERATORI.
+    # Interrogare ENTI_OPERATORI e' piu' affidabile che dedurre i beneficiari dal
+    # testo: molte schede indicano come "destinatari" i beneficiari finali
+    # (es. i migranti) mentre a candidarsi sono i Comuni.
+    URL = f"{BASE}?p_p_id={PORTLET}&p_p_lifecycle=0&p_p_state=normal&p_p_mode=view" \
+          f"&_{PORTLET}_filterBeneficiari=ENTI_OPERATORI"
 
     def fetch(self) -> list[Bando]:
         from selectolax.parser import HTMLParser
@@ -311,16 +318,23 @@ class PugliaConnettore(Connettore):
 
             out.append(self._b(
                 titolo=titolo,
-                url=a.attributes.get("href", self.URL),
+                url=a.attributes.get("href", self.BASE),
                 ente="Regione Puglia",
+                # dichiarazione della fonte, non deduzione nostra
+                beneficiari=["Enti e Operatori"],
                 descrizione=pulisci(card.css_first(".card-text")),
                 # il portale localizza le date secondo Accept-Language:
                 # gg/mm/aaaa in italiano, ISO altrimenti. Accetta entrambi.
                 data_apertura=parse_data(estrai(r"Data apertura:\s*([\d/.-]{8,10})")),
                 data_scadenza=parse_data(estrai(r"Data chiusura:\s*([\d/.-]{8,10})")),
                 tema=tipologia,
-                raw={"stato_fonte": stato},
+                raw={"stato_fonte": stato, "filtro_fonte": "ENTI_OPERATORI"},
             ))
+
+        # La fonte dichiara che questi bandi sono per enti e non per cittadini o
+        # imprese: e' un segnale strutturale, vale piu' di una parola nel titolo.
+        for b in out:
+            b.score_comuni = round(b.score_comuni + 2.0, 2)
         return out
 
 
