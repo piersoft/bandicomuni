@@ -42,7 +42,9 @@ jobs:
       - name: Esegui ingestione
         working-directory: src
         run: python registry.py
-        continue-on-error: true      # una fonte KO non deve bloccare la pubblicazione
+        # Una singola fonte KO non blocca la pubblicazione: l'errore e' gia' gestito
+        # dentro registry.py e finisce in ingest_log. Se invece fallisce l'intero
+        # script (es. schema incompatibile) il job deve fermarsi, non fingere successo.
 
       - name: Esporta JSON statici
         working-directory: src

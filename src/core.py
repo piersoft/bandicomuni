@@ -332,10 +332,21 @@ CREATE TABLE IF NOT EXISTS ingest_log (
 """
 
 
+# Colonne aggiunte dopo la prima release. CREATE TABLE IF NOT EXISTS non le
+# introduce in un DB preesistente (es. quello ripristinato dalla cache di Actions),
+# quindi vanno applicate esplicitamente a ogni avvio.
+MIGRAZIONI = {"score_bando": "REAL DEFAULT 0"}
+
+
 def connect(path: Path = DB_PATH) -> sqlite3.Connection:
     con = sqlite3.connect(path)
     con.row_factory = sqlite3.Row
     con.executescript(SCHEMA)
+    presenti = {r[1] for r in con.execute("PRAGMA table_info(bandi)")}
+    for colonna, tipo in MIGRAZIONI.items():
+        if colonna not in presenti:
+            con.execute(f"ALTER TABLE bandi ADD COLUMN {colonna} {tipo}")
+            con.commit()
     return con
 
 
