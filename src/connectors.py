@@ -251,3 +251,64 @@ class CkanDiscovery(Connettore):
         # dedup per name
         uniq = {t["name"]: t for t in trovati}
         return list(uniq.values())
+
+
+# --------------------------------------------------------------------------- Puglia
+
+
+class PugliaConnettore(Connettore):
+    """Catalogo bandi di Regione Puglia (Liferay + React).
+
+    Il portlet espone un export CSV, ma e' piu' povero della pagina: niente URL della
+    scheda, righe vuote e intestazione duplicata. Le card HTML contengono invece
+    titolo, link, descrizione, area tematica e sempre entrambe le date.
+    """
+
+    id = "pug-catalogo"
+    nome = "Regione Puglia - Catalogo bandi"
+    livello = "regionale"
+    regione = "Puglia"
+    URL = "https://sistema.regione.puglia.it/catalogo-bandi"
+
+    def fetch(self) -> list[Bando]:
+        from selectolax.parser import HTMLParser
+
+        r = self.http.get(self.URL)
+        r.raise_for_status()
+        doc = HTMLParser(r.text)
+        pulisci = lambda n: re.sub(r"\s+", " ", n.text(strip=True)) if n else ""
+
+        out = []
+        for a in doc.css('a[href*="scheda-bando"]'):
+            card = a
+            for _ in range(5):
+                if card.parent:
+                    card = card.parent
+                if "card-body" in str(card.attributes.get("class", "")):
+                    break
+
+            titolo = pulisci(card.css_first(".card-title"))
+            if not titolo:
+                continue
+            # separator: senza, i nodi adiacenti si incollano ("ApertoSRG01 - ...")
+            blob = re.sub(r"\s+", " ", card.text(separator=" ", strip=True))
+            estrai = lambda p: (re.search(p, blob).group(1) if re.search(p, blob) else None)
+
+            # lo stato sta in un nodo dedicato: leggerlo dal blob lo incollerebbe al titolo
+            stato = pulisci(card.css_first(".category-top")).replace("Stato:", "").strip()
+            sottotitoli = [pulisci(n) for n in card.css(".card-subtitle")]
+            tipologia = next((s for s in sottotitoli if "Data " not in s), None)
+
+            out.append(self._b(
+                titolo=titolo,
+                url=a.attributes.get("href", self.URL),
+                ente="Regione Puglia",
+                descrizione=pulisci(card.css_first(".card-text")),
+                # il portale localizza le date secondo Accept-Language:
+                # gg/mm/aaaa in italiano, ISO altrimenti. Accetta entrambi.
+                data_apertura=parse_data(estrai(r"Data apertura:\s*([\d/.-]{8,10})")),
+                data_scadenza=parse_data(estrai(r"Data chiusura:\s*([\d/.-]{8,10})")),
+                tema=tipologia,
+                raw={"stato_fonte": stato},
+            ))
+        return out

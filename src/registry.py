@@ -6,7 +6,7 @@ import traceback
 import warnings
 
 from connectors import (CkanDiscovery, PloneConnettore, RssConnettore,
-                        SediaConnettore, SocrataConnettore)
+                        SediaConnettore, SocrataConnettore, PugliaConnettore)
 from html_connector import HtmlConnettore
 from core import Http, connect, log_ingest, salva
 
@@ -41,6 +41,7 @@ FONTI = [
                  direzione="direzione_generale", apertura="apertura_adesione",
                  scadenza="chiusura_adesione", tema="tipo_strumento", ordine="codice_bando"), bando_certo=True)),
     (SediaConnettore, dict(bando_certo=True)),
+    (PugliaConnettore, dict(bando_certo=True)),
 
     # --- RSS -----------------------------------------------------------------
     (RssConnettore, dict(
