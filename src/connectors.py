@@ -379,3 +379,94 @@ class PaDigitaleConnettore(Connettore):
                      "totale_importo_misura": x.get("totale_importo_misura")},
             ))
         return out
+
+
+# --------------------------------------------------------------------------- Gazzetta Ufficiale
+
+
+class GazzettaConnettore(Connettore):
+    """Serie Generale della Gazzetta Ufficiale, ultimi 30 giorni.
+
+    Il feed RSS espone solo l'ultimo numero: cinque atti al giorno, e nulla del
+    pregresso. La pagina /30giorni elenca invece tutti i numeri dell'ultimo mese;
+    da ognuno si legge il sommario e se ne estraggono gli atti. E' la sola fonte
+    in cui converge ogni decreto di contributo agli enti locali, qualunque sia il
+    ministero che lo adotta.
+    """
+
+    id = "gazzetta-sg"
+    nome = "Gazzetta Ufficiale - Serie Generale"
+    livello = "nazionale"
+    BASE = "https://www.gazzettaufficiale.it"
+
+    # La Serie Generale pubblica ~550 atti al mese, quasi tutti amministrativi.
+    # Senza un filtro dedicato l'archivio si riempirebbe di aggiornamenti di
+    # pericolosita' idraulica e proroghe di stato di emergenza. Si tengono solo
+    # gli atti che aprono o disciplinano una candidatura.
+    APRE_CANDIDATURA = re.compile(
+        r"avviso pubblico|bando|manifestazione di interesse|"
+        r"present\w+ (?:delle |di )?(?:domand|istanz|richiest|proposte)|"
+        r"modalit\w+ (?:di |per )?(?:presentazione|richiesta|accesso)|"
+        r"termin\w+ per la presentazione|candidatur|"
+        r"selezione (?:di|dei|delle) (?:progett|propost|intervent)", re.I)
+    ESCLUDI = re.compile(
+        r"aggiornamento della pericolosit|stato di emergenza|"
+        r"revoca|graduatoria|nomina|scioglimento|"
+        r"riconoscimento della personalit|cambiamento di denominazione|"
+        r"variazione del|liquidazione coatta|regolamento recante", re.I)
+    ELENCO = f"{BASE}/30giorni/serie_generale"
+    ENTE = "Gazzetta Ufficiale della Repubblica Italiana"
+
+    def _numeri(self) -> list[tuple[str, str]]:
+        from selectolax.parser import HTMLParser
+
+        r = self.http.get(self.ELENCO)
+        r.raise_for_status()
+        visti, out = set(), []
+        for a in HTMLParser(r.text).css("a"):
+            h = a.attributes.get("href") or ""
+            if "caricaDettaglio" not in h:
+                continue
+            data = re.search(r"dataPubblicazioneGazzetta=([\d-]+)", h)
+            num = re.search(r"numeroGazzetta=(\d+)", h)
+            if data and num and (data.group(1), num.group(1)) not in visti:
+                visti.add((data.group(1), num.group(1)))
+                out.append((data.group(1), num.group(1)))
+        return out
+
+    def fetch(self) -> list[Bando]:
+        from selectolax.parser import HTMLParser
+
+        out = []
+        for data, num in self._numeri()[: self.cfg.get("max_numeri", 30)]:
+            url = (f"{self.BASE}/gazzetta/serie_generale/caricaDettaglio"
+                   f"?dataPubblicazioneGazzetta={data}&numeroGazzetta={num}")
+            try:
+                r = self.http.get(url)
+                if r.status_code != 200:
+                    continue
+            except Exception:
+                continue
+            doc = HTMLParser(r.text)
+            for sp in doc.css("span.risultato"):
+                a = sp.css_first('a[href*="caricaDettaglioAtto"]')
+                if a is None:
+                    continue
+                intero = re.sub(r"\s+", " ", sp.text(separator=" ", strip=True))
+                intestazione = re.sub(r"\s+", " ", a.text(strip=True))
+                oggetto = intero.replace(intestazione, "", 1).strip(" .")
+                if not oggetto:
+                    oggetto = intestazione
+                link = a.attributes.get("href", "")
+                if self.ESCLUDI.search(oggetto) or not self.APRE_CANDIDATURA.search(
+                        f"{oggetto} {intestazione}"):
+                    continue
+                out.append(self._b(
+                    titolo=oggetto[:400],
+                    url=link if link.startswith("http") else self.BASE + link,
+                    ente=self.ENTE,
+                    descrizione=f"{intestazione} — Serie Generale n. {num} del {data}",
+                    data_pubblicazione=parse_data(data),
+                    raw={"numero_gazzetta": num, "atto": intestazione[:200]},
+                ))
+        return out

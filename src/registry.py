@@ -5,7 +5,7 @@ import sys
 import traceback
 import warnings
 
-from connectors import (PaDigitaleConnettore, CkanDiscovery, PloneConnettore, RssConnettore,
+from connectors import (GazzettaConnettore, PaDigitaleConnettore, CkanDiscovery, PloneConnettore, RssConnettore,
                         SediaConnettore, SocrataConnettore, PugliaConnettore)
 from html_connector import HtmlConnettore
 from core import Http, connect, log_ingest, salva
@@ -46,11 +46,9 @@ FONTI = [
     (SediaConnettore, dict(bando_certo=True, scadenza_esposta=True)),
     (PugliaConnettore, dict(bando_certo=True, scadenza_esposta=True)),
     (PaDigitaleConnettore, dict(bando_certo=True, scadenza_esposta=True)),
-    # La Serie Generale pubblica di tutto: niente bando_certo, filtra il classificatore.
-    (RssConnettore, dict(
-        id="gazzetta-sg", nome="Gazzetta Ufficiale - Serie Generale", livello="nazionale",
-        feed="https://www.gazzettaufficiale.it/rss/SG",
-        ente="Gazzetta Ufficiale della Repubblica Italiana")),
+    # Copre 30 giorni di Serie Generale: e' l'unico punto in cui convergono i
+    # decreti di contributo agli enti locali di qualunque ministero.
+    (GazzettaConnettore, dict()),
 
     # --- RSS -----------------------------------------------------------------
     (RssConnettore, dict(
